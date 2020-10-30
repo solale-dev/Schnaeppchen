@@ -47,8 +47,7 @@ button:hover {
 Anmeldename: <input required type="text" name="Anmeldename" value="">
 <span class="error">* <?php echo $AnmeldenameErr;?></span>
 <br><br>
-Password: <input required type="password" name="Password" value="">
-<span class="error">* <?php echo $PasswordErr;?></span>
+Password: <input type="password" name="Password" value="">
 <br><br><br>
 <button name="aktion" class="button button1" value="Registrierung">Registrierung</button>
 <button name="aktion" class="button button2">Anmelden</button>

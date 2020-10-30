@@ -1,39 +1,43 @@
 <?php
-$AnmeldenameErr = $PasswordErr = "";
+session_start();
+
+$AnmeldenameErr = "";
 $Anmeldename = $Password = "";
 $Registrierung = $Anmelden = "";
 $sqlMeldung = "";
 $PasswordÄnderung = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+  if (empty($_POST["Anmeldename"])) {
+    $AnmeldenameErr = "Anmeldename ist Pflicht";
+  }
+  else {
+    $Anmeldename = test_input($_POST["Anmeldename"]);
+    echo "$Anmeldename";
+    if (!preg_match("/^[a-zA-Z_][a-zA-Z0-9@._]{4,255}$/",$Anmeldename)) {
+      echo "Test: $Anmeldename";
+      $AnmeldenameErr = "nur Buchstaben erlaubt";
+    }
+  }
+  $_SESSION["Anmeldename"] = $Anmeldename;
   if ($_POST["aktion"] == "Registrierung" ) {
     // Registrieungsanweisungen
-    include "registrierung.php";
-    exit;
+    header("Location: Registrierung.php");
   }
-  elseif ($_POST["aktion"] == "PasswordÄnderung" ) {
+  elseif ($_POST["aktion"] == "PasswordÄnderung" && empty($AnmeldenameErr)) {
     // Änderungsanweisungen
     header("Location: passwordaenderung.php");
   }
-  elseif ($_POST["aktion"] == "Anzeige") {
-    if (empty($_POST["Anmeldename"])) {
-      $AnmeldenameErr = "Anmeldename ist Pflicht";
-    }
-    else {
-      $Anmeldename = test_input($_POST["Anmeldename"]);
-      if (!preg_match("/^[a-zA-Z_][a-zA-Z0-9@._]{5,255}$/",$Anmeldename)) {
-        $AnmeldenameErr = "nur Buchstaben erlaubt";
-      }
-    }
-    
+  elseif ($_POST["aktion"] == "Anmelden") {
     if (empty($_POST["Password"])) {
-      $PasswordErr = "Password ist pflicht";
+      $Password = test_input($_POST["Password"]);
     }
     else {
       $Password = ($_POST["Password"]);
     }
   
-    if (($AnmeldenameErr . $PasswordErr) == "") {
+    if (($AnmeldenameErr) == "") {
       $servername = "localhost";
       $username = "root";
       $password = "";
@@ -50,13 +54,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       //if (password_verify($Password, $sqlpwd))
       //if ($Password === $sqlpwd)
       $conn->close();
-      include "anzeige.php";
+      include "Anmelden.php";
       exit;
     }
   }
+  elseif ($_POST["aktion"] == "OK") {
+    include "Anmelden.php";
+  }
 }
 include "anmeldung.html";
-
+echo password_hash("Password", PASSWORD_DEFAULT);
 function test_input($data) {
   $data = trim($data);
   $data = stripslashes($data);
