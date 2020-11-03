@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once "zugangDB.php";
+
 $AnmeldenameErr = "";
 $Anmeldename = $Password = "";
 $Registrierung = $Anmelden = "";
@@ -38,14 +40,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
   
     if (($AnmeldenameErr) == "") {
-      $servername = "localhost";
-      $username = "root";
-      $password = "";
-      $dbname = "Schnaeppchen";
-      $conn = new mysqli($servername, $username, $password, $dbname);
-      if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-      }
       $sql = "Select * From anmeldungen";
       $sql .= " where Anmeldename = '$Anmeldename';";
 
@@ -53,7 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       //if (password_verify($Password, $sqlpwd))
       //if ($Password === $sqlpwd)
-      $conn->close();
       include "Anmelden.php";
       exit;
     }
@@ -63,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 include "anmeldung.html";
-echo password_hash("Password", PASSWORD_DEFAULT);
+
 function test_input($data) {
   $data = trim($data);
   $data = stripslashes($data);

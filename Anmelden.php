@@ -1,15 +1,16 @@
 <?php
 
+require_once "zugangDB.php";
 function cmbFeld($name, $liste, $wert="", $titel="", $klasse="", $weitere=""){
-  $cmbfeld = "<select name='$name'";
+  $cmbfeld = "<select name='$name' id='$name'";
   if (!empty($titel))
     $cmbfeld .= " title='$titel'";
   if (!empty($klasse))
     $cmbfeld .= " class='$klasse'";
   $cmbfeld .= " $weitere>\n";
   
-  foreach($liste as $element) {
-    $cmbfeld .= "  <option";
+  foreach($liste as $key => $element) {
+    $cmbfeld .= "  <option value='$key'";
     if ($element == $wert)
       $cmbfeld .= " selected='selected'";
     $cmbfeld .= ">$element</option>\n";
@@ -19,31 +20,44 @@ function cmbFeld($name, $liste, $wert="", $titel="", $klasse="", $weitere=""){
   return $cmbfeld;
 }
 
+$AnzeigeErr = "";
 $sqlMeldung = "";
-$AnzeigeErr = $AnzeigetextErr= "";
-$Biete = $Suche = "";
-$hauprubriken = array("Wählen Sie eine Hauptrubrik aus!", "$sql");
-$Hauptrubriken = $hauprubriken[0];
-$unterrubriken = array("");
-$Unterrubriken = $unterrubriken[0];
-$Abbrechen = $Ok = "";
+$sql = "";
+$BieteSuche = $Anzeigetext = $Veröffentlichungsdatum = $Telefon = "";
+$Abbrechen = $Ok = $Bestätigen = "";
+$hauptrubriken = array("Wählen Sie eine Hauptrubrik aus!");
+$sql = "SELECT `hauptrubrikenID`, `hauptrubrik` FROM `hauptrubriken`;";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  if (empty($_POST["Biete"])) {
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+  while($row = $result->fetch_assoc()) {
+    $hauptrubriken[$row["hauptrubrikenID"]] =  $row["hauptrubrik"]; //echo "<br> hauptrubik: ".$row["hauptrubrikenID"];
+  }
+}
+$Hauptrubriken = $hauptrubriken[0];
+
+$unterrubriken = array("Wählen Sie eine Unterrubrik aus!");
+$sql = "SELECT `unterrubrikenID`, `Unterrubrik` FROM `unterrubriken` where `hauptrubrikenID` = 0";
+
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+  while($row = $result->fetch_assoc()) {
+    $unterrubriken[$row["unterrubrikenID"]] =  $row["Unterrubrik"]; //echo "<br> unterrubik: ".$row["hauptrubrikenID"];
+  }
+}
+$Unterrubriken = $unterrubriken[0];
+
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" ) {
+  if (empty($_POST["BieteSuche"])) {
     $AnzeigeErr .= " Formular ist Leer";
   }
   else {
-    $Biete = $_POST["Beite"];
-  }
-
-  if (empty($_POST["Suche"])) {
-      $AnzeigeErr = " Formular ist Leer";
-  }
-  else {
-    $Suche = $_POST["Suche"];
+    $BieteSuche = $_POST["BieteSuche"];
   } 
  
-  if (!empty($_POST["Hauptrubriken"]) && in_array($_POST["Hauptrubriken"], $hauprubriken)) {
+  if (!empty($_POST["Hauptrubriken"]) && in_array($_POST["Hauptrubriken"], $hauptrubriken)) {
     $Hauptrubriken = $_POST["Hauptrubriken"];
   } else {
     $AnzeigeErr .= "Formular ist Leer";
@@ -59,29 +73,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   else {
     $Anzeigetext = test_input($_POST["Anzeigetext"]);
     if (!preg_match("/^[a-zA-Z-' .0-9]*$/",$Anzeigetext)) {
-      $AnzeigetextErr = "ungültiges Anzeigetext-format";
+      $AnzeigeErr .= "Formular ist Leer";
     }
   }
-  if (($AnzeigeErr . $AnzeigetextErr) == "") {
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "Schnaeppchen";
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
-    }
-    $sql = "SELECT `hauptrubrikenID`, `hauptrubrik` FROM `hauptrubriken`";
-    $result = $conn->query($sql);
-    if ($result->num_rows > 0) {
-      while($row = $result->fetch_assoc()) {
-        echo "<br> haptrubik: ".$row["hauptrubrikenID"];
-      }
-    }
+  if (isset($_POST["Veröffentlichungsdatum"])) {
+    $Veröffentlichungsdatum = $_POST["Veröffentlichungsdatum"];
   }
- }
- $conn->close();
+
+  $sql = "INSERT INTO Anzeige (BieteSuche, hauptrubrik, Unterrubrik, Veröffentlichungsdatum, Anzeigetext)";
+  $sql .= " values('$BieteSuche', '$Hauptrubriken', '$Unterrubriken', '$Veröffentlichungsdatum', '$Anzeigetext');";
+
+  if ($conn->query($sql) === TRUE) {
+    //$last_id = $conn->insert_id;
+    $sqlMeldung = "";
+  } else {
+    $sqlMeldung = "Error: " . $sql . "<br>" . $conn->error;
+  }
+  
+  /*if ($AnzeigeErr == "") {
+    //insert in AnzeigeTabelle
+    $conn->close();
+ }*/
+}
 ?>
+
 <!DOCTYPE HTML>  
 <html>
 <head>
@@ -113,31 +128,46 @@ button:hover {
 </style>
 </head>
 <body>
+
 <?php
 if ($sqlMeldung != "Anzeige speichert") {
   echo $sqlMeldung, "<br>";
   $self = htmlspecialchars($_SERVER["PHP_SELF"]);
-  $cmbhaupt = cmbFeld("Hauptrubriken",$hauprubriken,$Hauptrubriken);
+  $cmbhaupt = cmbFeld("Hauptrubriken",$hauptrubriken,$Hauptrubriken);
+  $cmbUnter = cmbFeld("Unterrubriken",$unterrubriken,$Unterrubriken);
 echo <<<EOF
   <h2>Anzeige</h2>
-  <span class="error">$AnzeigeErr</span>
 <form method="post" action="$self">
     Biete <input required type="radio" name="BieteSuche" value="Biete">
     Suche <input required type="radio" name="BieteSuche" value="Suche">
     <br><br><br>
     $cmbhaupt
+    $cmbUnter
+    <br><br><br>
+    Veröffentlichungsdatum <input type="date" name="Veröffentlichungsdatum" value="">
     <br><br><br>
         Anzeigetext <textarea name="Anzeigetext" rows="5" cols="30"></textarea>
         <br><br><br>
+        Telefon <input type="tel" name="Telefon" value="">
+        <br><br><br>
     <button name="aktion" class="button button1" value="Abbrechen">Abbrechen</button>
-    <button name="aktion" class="button button2"value="OK" >Ok</button>
+    <button type="submit">Ok</button>
     <br><br><br>
 </form>
 EOF;
 }
-else {
-  echo $sqlMeldung,"<br>";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  echo "<h2>Ihre Anzeige:</h2>",
+   "$Biete -> $Hauptrubriken -> $Unterrubriken <br>",
+   "$Veröffentlichungsdatum<br>",
+   "$Telefon<br>",
+   "$Anzeigetext<br>";
 }
+$conn->close();
 ?>
+    <!--<br><br><br>
+    <button name="aktion" class="button button1" value="Abbrechen">Abbrechen</button>
+    <button name="aktion" class="button button2"value="Bestätigen">Bestätigen</button>-->
+    <script src="ajax.js"></script>
 </body>
 </html>
