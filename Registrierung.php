@@ -1,64 +1,56 @@
 <?php
-session_start();
+require_once "zugangDB.php";
+include_once "eingabe.php";
 
-$sqlMeldung = "";
-$VornameErr = $NameErr = $TelefonErr = $EmailErr = $straßeErr = "";
+$frmError = "";
+$sqlError = "";
+
 $Anrede = $Name = $Vorname = "";
 $Telefon = $Email = $Anmeldename = "";
 $Straße = $PLZ = $Ort = "";
 $Registrierung = "";
 
-
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "schnaeppchen";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  // Check der Variable auf gültige Eingabe
   if (empty($_POST["Anrede"])) {
-    $Anrede = test_input($_POST["Anrede"]);
+    $frmError = "Anrede ist Pflicht";
   }
   else {
-    $Anrede = ($_POST["Anrede"]);
+    $Anrede= test_input($_POST["Anrede"]);
+  }
+  if (empty($_POST["Name"])) {
+    $frmError = "Name ist Pflicht";
+  }
+  else {
+    $Name = test_input($_POST["Name"]);
+    if (!preg_match("/^[a-zA-Z-' ]*$/",$Name)) {
+      $frmError = "nur Buchstaben erlaubt";
+    }
   }
   if (empty($_POST["Vorname"])) {
-    $Vorname = test_input($_POST["Vorname"]);
+    $frmError = "Vorname ist Pflicht";
   }
   else {
-    $Vorname = ($_POST["Vorname"]);
-  }
-
+    $Vorname = test_input($_POST["Vorname"]);
     if (!preg_match("/^[a-zA-Z-' ]*$/",$Vorname)) {
-      $VornameErr = "nur Buchstaben erlaubt";
+      $frmError = "nur Buchstaben erlaubt";
     }
-    if (empty($_POST["Name"])) {
-      $NameErr = "Name ist Pflicht";
-    }
-    else {
-      $Name = test_input($_POST["Name"]);
-      if (!preg_match("/^[a-zA-Z-' ]*$/",$Name)) {
-        $NameErr = "nur Buchstaben erlaubt";
-      }
-    }
+  }
   if (empty($_POST["Telefon"])) {
-    $TelefonErr = " Telefon ist Pflicht";
+    $frmError = " Telefon ist Pflicht";
   } else {
     $Telefon = test_input($_POST["Telefon"]);
     if (!preg_match("/^[0-9]*$/",$Telefon)) {
-      $TelefonErr = "nur Zahlen erlaubt";
+      $frmErrot = "nur Zahlen erlaubt";
     }
 
   } 
   if (empty($_POST["Email"])) {
-    $EmailErr = "Email is Pflicht";
+    $frmError = "Email is Pflicht";
   } else {
     $Email = test_input($_POST["Email"]);
     if (!filter_var($Email, FILTER_VALIDATE_EMAIL)) {
-      $EmailErr = "ungültiges Email-format";
+      $frmError = "ungültiges Email-format";
     }
   }
   if (empty($_POST["Straße"])) {
@@ -69,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 
     if (!preg_match("/^[a-zA-Z-' ]*$/",$Straße)) {
-      $StraßeErr = "nur Buchstaben erlaubt";
+      $frmError = "nur Buchstaben erlaubt";
     }
     if (empty($_POST["PLZ"])) {
       $PLZ = test_input($_POST["PLZ"]);
@@ -84,23 +76,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $Ort = ($_POST["Ort"]);
     }
     // Wenn keine Fehler dann speichern in DB
-    if (($NameErr . $TelefonErr . $EmailErr) == "") {
-      $sql = "INSERT INTO (Anrede, Vorname, Name, Telefon, Email, Straße, PLZ, Ort)";
-      $sql .= " values('$Anrede', '$Vorname', '$Name', '$Telefon', '$Email', '$Straße', '$PLZ', '$Ort');";
+    if ($frmError == "") {
+      $sql = "INSERT INTO (Anrede, Name, Vorname, Telefon, Email, Straße, PLZ, Ort)";
+      $sql .= " values('$Anrede', '$Name', '$Vorname', '$Telefon', '$Email', '$Straße', '$PLZ', '$Ort');";
       if ($conn->query($sql) === TRUE) {
           
-          $sqlMeldung = "New record created successfully";
+          $sqlError = "New record created successfully";
         } else {
-          $sqlMeldung = "Error: " . $sql . "<br>" . $conn->error;
+          $sqlError = "Error: " . $sql . "<br>" . $conn->error;
         }
     
-      }
-} 
-function test_input($data) {
-  $data = trim($data);
-  $data = stripslashes($data);
-  $data = htmlspecialchars($data);
-  return $data;
+    }
 } 
 ?>
 <!DOCTYPE HTML>
