@@ -35,8 +35,8 @@ if ($result->num_rows > 0) {
   }
 }
 $Hauptrubriken = $hauptrubriken[0];
-
 $unterrubriken = array("Wählen Sie eine Unterrubrik aus!");
+/*
 $sql = "SELECT `unterrubrikenID`, `Unterrubrik` FROM `unterrubriken` where `hauptrubrikenID` = 0";
 
 $result = $conn->query($sql);
@@ -45,6 +45,7 @@ if ($result->num_rows > 0) {
     $unterrubriken[$row["unterrubrikenID"]] =  $row["Unterrubrik"]; //echo "<br> unterrubik: ".$row["hauptrubrikenID"];
   }
 }
+*/
 $Unterrubriken = $unterrubriken[0];
 
 
@@ -62,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" ) {
   } else {
     $AnzeigeErr .= "Formular ist Leer";
   }
-  if (!empty($_POST["Unterrubriken"]) && in_array($_POST["Unterrubriken"], $Unterrubriken)) {
+  if (!empty($_POST["Unterrubriken"]) && in_array($_POST["Unterrubriken"], $unterrubriken)) {
     $Unterrubriken = $_POST["Unterrubriken"];
   } else {
     $AnzeigeErr .= "Formular ist Leer";
@@ -79,21 +80,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" ) {
   if (isset($_POST["Veröffentlichungsdatum"])) {
     $Veröffentlichungsdatum = $_POST["Veröffentlichungsdatum"];
   }
+  if ($AnzeigeErr == "") {
+    $sql = "INSERT INTO `anzeigen`(`BieteSuche`, `unterrubrikenID`, `Anzeigetext`, `veröffentlichungsdatum`, `KundenID`)";
+    $sql .= " values('$BieteSuche', '$Unterrubriken', '$Anzeigetext', '$Veröffentlichungsdatum', 1);";
 
-  $sql = "INSERT INTO Anzeige (BieteSuche, hauptrubrik, Unterrubrik, Veröffentlichungsdatum, Anzeigetext)";
-  $sql .= " values('$BieteSuche', '$Hauptrubriken', '$Unterrubriken', '$Veröffentlichungsdatum', '$Anzeigetext');";
-
-  if ($conn->query($sql) === TRUE) {
-    //$last_id = $conn->insert_id;
-    $sqlMeldung = "";
-  } else {
-    $sqlMeldung = "Error: " . $sql . "<br>" . $conn->error;
+    if ($conn->query($sql) === TRUE) {
+      //$last_id = $conn->insert_id;
+      $sqlMeldung = "";
+    } else {
+      $sqlMeldung = "Error: " . $sql . "<br>" . $conn->error;
+    }
   }
-  
-  /*if ($AnzeigeErr == "") {
-    //insert in AnzeigeTabelle
-    $conn->close();
- }*/
 }
 ?>
 
@@ -151,14 +148,15 @@ echo <<<EOF
         Telefon <input type="tel" name="Telefon" value="">
         <br><br><br>
     <button name="aktion" class="button button1" value="Abbrechen">Abbrechen</button>
-    <button type="submit">Ok</button>
+    <button name="aktion" class="button button1" value="Speichern">Speichern</button>
+    
     <br><br><br>
 </form>
 EOF;
 }
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  echo "<h2>Ihre Anzeige:</h2>",
-   "$Biete -> $Hauptrubriken -> $Unterrubriken <br>",
+  echo "<h2>Übersicht:</h2>",
+   "$BieteSuche -> $Hauptrubriken -> $Unterrubriken <br>",
    "$Veröffentlichungsdatum<br>",
    "$Telefon<br>",
    "$Anzeigetext<br>";

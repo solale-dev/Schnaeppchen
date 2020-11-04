@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       exit;
     }
   }
-  elseif ($_POST["aktion"] == "OK") {
+  elseif ($_POST["aktion"] == "Speichern") {
     include "Anmelden.php";
   }
 }
