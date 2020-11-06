@@ -50,29 +50,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" ) {
   if (isset($_POST["Veröffentlichungsdatum"])) {
     $Veröffentlichungsdatum = $_POST["Veröffentlichungsdatum"];
   }
+  if (empty($_POST["Telefon"])) {
+    $frmError .= "Telefon ist Leer";
+  }
+  else {
+    $Telefon = test_input($_POST["Telefon"]);
+    if (!preg_match("/^[0-9]*$/",$Telefon)) {
+      $frmError .= "Telefon passt nicht in dieses Format";
+    }
+  }
 
   if ($frmError == "" && $_POST["aktion"] == "Speichern") {
-    $sql = "INSERT INTO `anzeigen`(`BieteSuche`, `unterrubrikenID`, `Anzeigetext`, `veröffentlichungsdatum`, `KundenID`)";
-    $sql .= " values('$BieteSuche', '$Unterrubriken', '$Anzeigetext', '$Veröffentlichungsdatum', 1);";
+    $Zeile = 30;
+    $prozeile = 1;
+    $Preis = (int)(strlen($Anzeigetext)/$zeile) + 1 * $prozeile;
+    $sql = "INSERT INTO `anzeigen`(`BieteSuche`, `unterrubrikenID`, `Anzeigetext`, `veröffentlichungsdatum`, `Telefon`, `KundenID`, `Preis`)";
+    $sql .= " values('$BieteSuche', '$Unterrubriken', '$Anzeigetext', '$Veröffentlichungsdatum', '$Telefon', 1, '$Preis');";
 
     if ($conn->query($sql) === TRUE) {
       //$last_id = $conn->insert_id;
       $sqlError = "";
       $_SESSION["nextFrm"] = "uebersicht.php";
-      header("Location: /schnaeppchen/index.php");
+      header("Location: /schnaeppchen/index.php?anzeigeID=" . $conn->insert_id);
       exit;
     } else {
       $sqlError = "Error: " . $sql . "<br>" . $conn->error;
     }
   }
+  elseif ($frmError == "" && $_POST["aktion"] == "Abbrechen") {
+      $_SESSION["nextFrm"] = "anmeldung.php";
+      header("Location: /schnaeppchen/index.php");
+      exit;
+  }
 }
-
 if (!(empty($frmError) && empty($sqlError) && $_SERVER["REQUEST_METHOD"] == "POST")) {
   $cmbhaupt = cmbFeld("Hauptrubriken",$hauptrubriken,$Hauptrubriken);
   $cmbUnter = cmbFeld("Unterrubriken",$unterrubriken,$Unterrubriken);
   $self = htmlspecialchars($_SERVER["PHP_SELF"]);
   echo <<<EOF
   <h2>Anzeige</h2>
+ 
   <form method="post" action="$self">
     <span class="error">$frmError</span>
     <span class="error">$sqlError</span>
@@ -83,10 +100,11 @@ if (!(empty($frmError) && empty($sqlError) && $_SERVER["REQUEST_METHOD"] == "POS
     $cmbhaupt
     $cmbUnter
     <br><br><br>
-    Veröffentlichungsdatum <input type="date" name="Veröffentlichungsdatum" value="">
-    <br><br><br>
+    <p>Preis pro 30 Zeilen 1€</p>
     Anzeigetext <textarea name="Anzeigetext" rows="5" cols="30"></textarea>
     <br><br<<br>
+    Veröffentlichungsdatum <input type="date" name="Veröffentlichungsdatum" value="">
+    <br><br><br>
     Telefon <input type="tel" name="Telefon" value="">
     <br><br><br>
     <button name="aktion" class="button button1" value="Abbrechen">Abbrechen</button>

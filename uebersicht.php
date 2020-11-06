@@ -2,24 +2,31 @@
 require_once "zugangDB.php";
 include_once "eingabe.php";
 
-  if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["kommentareID"])) {
-  $BieteSuche = $Unterrubriken = $Anzeigetext = $Veröffentlichungsdatum= "";
+  if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["anzeigeID"])) {
+  $BieteSuche = $Unterrubriken = $Anzeigetext = $Veröffentlichungsdatum = $Telefon = "";
   
-  $kid = $_GET["KundenID"];
-  $sql = "SELECT * FROM `anzeigen` WHERE KundenID = $kid";
+  $azid = $_GET["anzeigeID"];
+  $sql = "SELECT `BieteSuche`, `unterrubrikenID`,`Anzeigetext`, `veröffentlichungsdatum`,`Telefon`, Preis FROM `anzeigen`WHERE `anzeigenID` = $azid";
   $result = $conn->query($sql);
   $row = $result->fetch_assoc();
   
-  $Bieteuche = $row["BieteSuche"];
-  $Unterrubriken = $row["unterrubrikID"];
+  $BieteSuche = $row["BieteSuche"];
+  $Unterrubriken = $row["unterrubrikenID"];
   $Anzeigetext = $row["Anzeigetext"];
-  $Veröffentlichungsdatum = $row["Veröffentlichungsdatum"];
+  $Veröffentlichungsdatum = $row["veröffentlichungsdatum"];
+  $Telefon = $row["Telefon"];
+  $Preis = $row["Preis"];
 
-  $conn->close();
-
-  echo "<h2>Übersischt</h2>",
-     "$BieteSuche $Unterrubriken $Anzeigetext $Veröffentlichungsdatum", "<br>";
+  echo "<h2>Übersicht</h2>",
+     "$BieteSuche<br>",
+     "$Unterrubriken <br>",
+     "$Anzeigetext <br>", 
+     "$Veröffentlichungsdatum <br>",
+     "$Telefon <br>",
+     "$Preis <br>";
   }
 else {
-  echo "Fehlerhafte Eingabe";
+  $_SESSION["nextFrm"] = "anzeige.php";
+  header("Location: /schnaeppchen/index.php");
+  exit;
 }

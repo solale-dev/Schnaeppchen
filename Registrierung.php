@@ -8,7 +8,18 @@ $sqlError = "";
 $Anrede = $Name = $Vorname = "";
 $Telefon = $Email = $Anmeldename = "";
 $Straße = $PLZ = $Ort = "";
-$Registrierung = "";
+$Kontonummer = $IBAN = "";
+$Abbrechen = $Ok = "";
+$bankauswahl = array("Wählen Sie ein Bank aus!");
+$sql = "SELECT `bankenID`, `Bezeichnung`, `PLZ`  FROM `banken`;";
+
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+  while($row = $result->fetch_assoc()) {
+    $bankauswahl[$row["bankenID"]] =  $row["Bezeichnung"] . "-" . $row["PLZ"];
+  }
+}
+$Bankauswahl = $bankauswahl[0];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   // Check der Variable auf gültige Eingabe
@@ -75,112 +86,88 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     else {
       $Ort = ($_POST["Ort"]);
     }
+    if (!empty($_POST["Bankauswahl"]) /* Check bankenID zwischen 1 und 15789 */ ) {
+      $Bankauswahl = $_POST["Bankauswahl"];
+      } else {
+      $frmError .= "Bank hat nicht ausgewählt!";
+      }
+     
+      if (empty($_POST["Kontonummer"])) {
+        $frmError .= "Kontonummer ist Leer";
+      }
+      else {
+        $Kontonummer = test_input($_POST["Kontonummer"]);
+        if (!preg_match("/^[0-9]*$/",$Kontonummer)) {
+          $frmError .= "Kontonummer passt nicht in dieses Format";
+        }
+      }
+      if (empty($_POST["IBAN"])) {
+        $frmError .= "IBAN ist Pflicht";
+      }
+      else {
+        $IBAN = test_input($_POST["IBAN"]);
+        if (!preg_match("/^[a-zA-Z-' .0-9]*$/",$IBAN)) {
+          $frmError .= "IBAN passt nicht in dieses Format";
+        }
+      }
     // Wenn keine Fehler dann speichern in DB
     if ($frmError == "") {
-      $sql = "INSERT INTO (Anrede, Name, Vorname, Telefon, Email, Straße, PLZ, Ort)";
-      $sql .= " values('$Anrede', '$Name', '$Vorname', '$Telefon', '$Email', '$Straße', '$PLZ', '$Ort');";
+      $sql = "INSERT INTO (Anrede, Name, Vorname, Telefon, Email, Straße, PLZ, Ort, Bankauswahl, Kontonummer)";
+      $sql .= " values('$Anrede', '$Name', '$Vorname', '$Telefon', '$Email', '$Straße', '$PLZ', '$Ort', '$Bankauswahl', '$Kontonummer');";
       if ($conn->query($sql) === TRUE) {
-          
-          $sqlError = "New record created successfully";
-        } else {
-          $sqlError = "Error: " . $sql . "<br>" . $conn->error;
-        }
+        //$last_id = $conn->insert_id;
+        $sqlError = "";
+        $_SESSION["nextFrm"] = "anzeige.php";
+        header("Location: /schnaeppchen/index.php");
+        exit;
+      } else {
+        $sqlError = "Error: " . $sql . "<br>" . $conn->error;
+      }
+    }
+    elseif ($frmError == "" && $_POST["aktion"] == "Abbrechen") {
+      $_SESSION["nextFrm"] = "anmeldung.php";
+      header("Location: /schnaeppchen/index.php");
+      exit;
+    }
     
-    }
 } 
-?>
-<!DOCTYPE HTML>
-<html>
 
-<head>
-  <style>
-    input {
-      border: 1px solid darkblue;
-      box-sizing: border-box;
-      font-size: 14px;
-      font-family: 'serif';
-      width: 300px;
-      padding: 6px;
-    }
-
-    input[type=text]:focus {
-      background-color: lightblue;
-    }
-
-    input[type=password]:focus {
-      background-color: lightblue;
-    }
-
-    .error {
-      color: red;
-    }
-
-    button {
-      height: 40px;
-      background: green;
-      color: white;
-      border: 10px solid darkgreen;
-      font-size: 14px;
-      font-family: 'serif';
-    }
-
-    button:hover {
-      border: 2px solid black;
-    }
-
-    .button {
-      border: none;
-      color: black;
-      padding: 15px 32px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      margin: 4px 2px;
-      cursor: pointer;
-    }
-
-    .button1 {
-      background-color: lightgreen;
-    }
-
-    .button2 {
-      background-color: green;
-    }
-
-    .button3 {
-      background-color: yellow;
-    }
-  </style>
-</head>
-
-<body> 
+if (!(empty($frmError) && empty($sqlError) && $_SERVER["REQUEST_METHOD"] == "POST")) {
+  $cmbBank = cmbFeld("Bankauswahl",$bankauswahl,$Bankauswahl);
+  $self = htmlspecialchars($_SERVER["PHP_SELF"]);
+  echo <<<EOF
   <h2>Registrierung</h2>
   <p><span class="error">* Pflichtfeld</span></p>
-  <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
- Anrede:
-<input required type="radio" name="Anrede"<?php if (isset($Anrede) && $Anrede=="Frau") echo "checked";?> value="Frau">Frau
-<input required type="radio" name="Anrede"<?php if (isset($Anrede) && $Anrede=="Herr") echo "checked";?> value="Herr">Herr
-<input required type="radio" name="Anrede"<?php if (isset($Anrede) && $Anrede=="Divers") echo "checked";?> value="Divers">Divers 
-<br><br><br><br>
-Vorname: <input type="text" name="Vorname" value="<?php echo $Vorname;?>">
-<br><br>
-Name: <input required type="text" name="Name" value="<?php echo $Name;?>">
-<span class="error">* <?php echo $NameErr;?></span>
-<br><br>
-Telefon: <input required type="tel" name="Telefon" value="<?php echo $Telefon;?>">
-<span class="error">* <?php echo $TelefonErr;?></span>
-<br><br>
-Email: <input required typ="email" name="Email" value=<?php echo $Email;?>>
-<span class="error">* <?php echo $EmailErr;?></span>
-<br><br>
-Straße: <input typ="text" name="Straße" value=<?php echo $Straße;?>>
-<br><br>
-PLZ: <input typ="number" name="PLZ" value=<?php echo $PLZ;?>> Ort:<input type="text" name="Ort" value=<?php echo $Ort;?>>
-<br><br><br>
-<button name="aktion" class="button button1" value="Registrierung">Registrierung</button>
-</form>
-
-</body>
-
-</html>
+  <form method="post" action="$self">
+    <span class="error">$frmError</span>
+    <span class="error">$sqlError</span>
+    <br> Anrede:
+    Frau <input required type="radio" name="Anrede" value="Frau">
+    Herr<input required type="radio" name="Anrede" value="Herr">
+    Divers<input required type="radio" name="Anrede" value="Divers">
+    <br><br><br><br>
+    Vorname: <input type="text" name="Vorname" value="">
+    <br><br>
+    Name: <input required type="text" name="Name" value="">
+    <br><br>
+    Telefon: <input required type="tel" name="Telefon" value="">
+    <br><br>
+    Email: <input required typ="email" name="Email" value="">
+    <br><br>
+    Straße: <input typ="text" name="Straße" value="">
+    <br><br>
+    PLZ: <input typ="number" name="PLZ" value="">
+    <br><br> 
+    Ort:<input type="text" name="Ort" value="">
+    <br><br><br>
+    $cmbBank
+    <br><br><br>
+    Kontonummer <input type="text" name="Kontonummer" value="">
+    <br><br><br>
+    IBAN <input type="text" name="IBAN" value="">
+    <br><br><br>
+    <button name="aktion" class="button button1" value="Abbrechen">Abbrechen</button>
+    <button name="aktion" class="button button1" value="Ok">Ok</button>
+  </form>
+EOF;
+}

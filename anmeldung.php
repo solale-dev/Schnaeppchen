@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   if (empty($frmError)) {
     if ($_POST["aktion"] == "Registrierung" ) {
       // Registrieungsanweisungen
-      $_SESSION["nextFrm"] = "registrierung.php";
+      $_SESSION["nextFrm"] = "Registrierung.php";
     }
     elseif ($_POST["aktion"] == "PasswordÄnderung" && empty($frmError)) {
       // Änderungsanweisungen
